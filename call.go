@@ -186,7 +186,7 @@ func NewWindow() *Window {
 	mw.StatLabel = lbl_stats
 	
 	tk.NewVPackLayout(mw).AddWidgets(lbl,mw.StatLabel, tk.NewLayoutSpacer(mw, 0, true), btn)
-	mw.ResizeN(300, 200)
+	mw.ResizeN(300, 100)
 	return mw
 }
 
