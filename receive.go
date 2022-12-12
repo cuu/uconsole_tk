@@ -133,8 +133,9 @@ func listenToModemVoiceCallAdded(modem modemmanager.Modem, window*Window) {
 								if newState == modemmanager.MmCallStateTerminated {
 									ch_stop_ring <- true
 									tk.Async(func() {
-										window.StatLabel.SetText("Call rejected...exiting...")
+										window.StatLabel.SetText(fmt.Sprintf("%s Call rejected",number))
 									})
+									break
 								}
 							}
 						}
@@ -215,7 +216,7 @@ func NewWindow() *Window {
 	vbox := tk.NewVPackLayout(mw)
 
 	//lbl := tk.NewLabel(mw, fmt.Sprintf("%s Called", number))
-	lbl_stats := tk.NewLabel(mw, "Calling")
+	lbl_stats := tk.NewLabel(mw, "Waiting calls")
 	mw.StatLabel = lbl_stats
 		
         frm := tk.NewFrame(mw)
@@ -261,6 +262,6 @@ func main() {
 		return true
 	})
 	tk.MainLoop(func() {
-		
+		InitModem(mw)
 	})
 }
