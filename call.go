@@ -147,6 +147,7 @@ func InitModem(window *Window) modemmanager.Modem {
 		global_modem = modem
 		break
 	}
+	maxVolume()
 	return global_modem
 
 }
@@ -204,6 +205,12 @@ func rejectCall() error {
 	}
 
 	return nil
+}
+
+func maxVolume() error {
+	atcmd := "AT+CLVL=5"
+	_,err := global_modem.Command(atcmd,1)
+	return err
 }
 
 func main() {

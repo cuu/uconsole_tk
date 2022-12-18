@@ -11,6 +11,7 @@ import (
 	"github.com/maltegrosse/go-modemmanager"
 	"github.com/visualfc/atk/tk"
 	"strings"
+	"strconv"
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
@@ -21,6 +22,7 @@ type Window struct {
 	StatLabel *tk.Label
 	RejectBtn *tk.Button
 	AcceptBtn *tk.Button
+	MuteBtn   *tk.Button
 }
 var number string
 var current_call = make(chan modemmanager.Call, 1)
@@ -185,6 +187,66 @@ func acceptCall() error {
 	return nil
 }
 
+func getMuteStatus() int {
+	ret,err:= global_modem.Command("AT+CMUT?",1)
+	fmt.Println(ret)
+	if err == nil {
+		arr := strings.Split(ret, "+CMUT:")
+		mic := strings.TrimSpace(arr[1])
+		mic = strings.Replace(mic, "'", "", -1)
+		intVar,err := strconv.ParseInt(mic, 0, 10)
+		if err != nil {
+			fmt.Println(err)
+		}
+		
+		return int(intVar)
+	}else{
+		fmt.Println(err)
+	}
+	return 0
+}
+
+func setMuteStatus(newStatus int) error {
+	atcmd := fmt.Sprintf("AT+CMUT=%d",newStatus)
+	fmt.Println(atcmd)
+	ret,err := global_modem.Command(atcmd,1)
+	fmt.Println(ret,err)
+	return err
+}
+
+func muteMic(btn *tk.Button) {
+	intVar := getMuteStatus()
+	if intVar == 0 {
+		err := setMuteStatus(1)
+		if err == nil {
+			btn.SetText("Unmute")
+		}
+	}else{
+		err := setMuteStatus(0)
+		if err == nil {
+			btn.SetText("Mute")
+		}
+	}
+}
+
+func syncMute(window *Window) {
+	intVar := getMuteStatus()
+	labelStr := "Mute"
+	if intVar == 1 {
+		labelStr = "Unmute"
+	}
+	tk.Async(func() {
+		window.MuteBtn.SetText(labelStr)
+	})
+		
+}
+
+func maxVolume() error {
+	atcmd := "AT+CLVL=5"
+	_,err := global_modem.Command(atcmd,1)
+	return err
+}
+
 func InitModem(window *Window) modemmanager.Modem {
 
 	mmgr, err := modemmanager.NewModemManager()
@@ -206,6 +268,8 @@ func InitModem(window *Window) modemmanager.Modem {
 		global_modem = modem
 		break
 	}
+	//syncMute(window)
+	maxVolume()
 	return global_modem
 
 }
@@ -242,6 +306,24 @@ func NewWindow() *Window {
 	vbox.AddWidget(tk.NewLayoutSpacer(mw, 0, true))
 	vbox.AddWidget(frm)
 
+	/*
+	//Mute can not work
+        frm2 := tk.NewFrame(mw)
+        frm2.SetReliefStyle(tk.ReliefStyleFlat)
+        frm2.SetBorderWidth(5)
+
+	mw.MuteBtn = tk.NewButton(frm2, "Mute Mic")
+	mw.MuteBtn.OnCommand(func() {
+		muteMic(mw.MuteBtn)
+	})
+	
+	hbox2 := tk.NewHPackLayout(frm2)
+	
+	hbox2.AddWidgets(mw.MuteBtn)
+	hbox2.SetPaddingN(5,5)
+	
+	vbox.AddWidget(frm2)
+	*/
         vbox.SetBorderWidth(10)
 	vbox.Repack()
 	
